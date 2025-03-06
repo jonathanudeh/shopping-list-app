@@ -4,8 +4,8 @@ export function DiplayStyle({ gridDisplay, onStyleDisplayToggle }) {
       <img
         src={
           gridDisplay
-            ? "./images/grid-display.svg"
-            : "./images/list-display.svg"
+            ? "./images/list-display.svg"
+            : "./images/grid-display.svg"
         }
         alt="grid or list icon"
       />

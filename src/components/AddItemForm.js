@@ -13,22 +13,23 @@ export function AddItemForm({
   const [itemQuantity, setItemQuantity] = useState(
     objToEdit?.quantity ? objToEdit?.quantity : 1
   );
-  const [itemCategory, setItemCategory] = useState(
-    objToEdit?.category ? objToEdit?.category : "#ffffff"
-  );
+  // const [itemCategory, setItemCategory] = useState(
+  //   objToEdit?.category ? objToEdit?.category : "#ffffff"
+  // );
 
   function handleAddItemSubmission(e) {
     e.preventDefault();
 
-    if (!itemName || !itemCategory) return;
+    // if (!itemName || !itemCategory) return;
+    if (!itemName) return;
 
     const newList = {
       id: objToEdit?.id ? objToEdit?.id : Date.now(),
       item: itemName,
       quantity: itemQuantity || 1,
-      category: itemCategory,
+      // category: itemCategory,
       purchased: objToEdit?.purchased ? objToEdit?.purchased : false,
-      isArchived: false,
+      isArchived: objToEdit?.isArchived ? objToEdit?.isArchived : false,
     };
 
     if (!objToEdit) {
@@ -60,12 +61,14 @@ export function AddItemForm({
           value={itemQuantity}
           onChange={(e) => setItemQuantity(Number(e.target.value))}
         />
-        <label>Item Category (Optional)</label>
+
+        {/* <label>Item Category (Optional)</label>
         <input
           type="color"
           value={itemCategory}
           onChange={(e) => setItemCategory(e.target.value)}
-        />
+        /> */}
+
         <Button bgColor="#fd100e" btnWidth="100%">
           Add
         </Button>

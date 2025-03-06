@@ -5,6 +5,7 @@ import { Header } from "./components/Header";
 import { DiplayStyle } from "./components/DiplayStyle";
 import { AddItemIcon } from "./components/AddItemIcon";
 import { AddItemForm } from "./components/AddItemForm";
+import { DeleteAllItems } from "./DeleteAllItems";
 
 export default function App() {
   const saveToLocalStorage = (
@@ -52,6 +53,7 @@ export default function App() {
   const [archivedItems, setArchivedItems] = useState(
     LoadArchivedItemsFromLocalStorage
   );
+  const [sortBy, setSortBy] = useState("input");
 
   //Handles Archiving of items
 
@@ -67,7 +69,7 @@ export default function App() {
     const unArchivedObj = { ...obj, isArchived: false };
     setShoppingList((currList) => [...currList, unArchivedObj]);
     setArchivedItems((currList) =>
-      currList.filter((item) => item.isArchived !== obj.isArchived)
+      currList.filter((item) => item.id !== obj.id)
     );
   }
 
@@ -101,7 +103,7 @@ export default function App() {
     const confirm = window.confirm(`Do you want to delete ${obj.item}?`);
     if (!confirm) return;
 
-    return isArchiveOpen
+    isArchiveOpen
       ? setArchivedItems((currList) =>
           currList.filter((item) => item.id !== obj.id)
         )
@@ -117,14 +119,21 @@ export default function App() {
   }
 
   function handleActualEditingOfItems(obj) {
-    objToEdit?.isArchived
-      ? setArchivedItems((currItems) =>
-          currItems.map((item) => (item.id === objToEdit?.id ? obj : item))
+    if (objToEdit?.isArchived) {
+      setArchivedItems((currItems) =>
+        currItems.map((item) =>
+          item.id === objToEdit?.id ? { ...item, ...obj } : item
         )
-      : setShoppingList((currItems) =>
-          currItems.map((item) => (item.id === objToEdit?.id ? obj : item))
-        );
+      );
+    } else {
+      setShoppingList((currItems) =>
+        currItems.map((item) =>
+          item.id === objToEdit?.id ? { ...item, ...obj } : item
+        )
+      );
+    }
 
+    // Ensure objToEdit is reset after updating
     setObjToEdit(null);
   }
 
@@ -135,10 +144,28 @@ export default function App() {
       <main>
         <div className="filter-div">
           <Button onClick={() => setIsArchiveBtnShowing((prev) => !prev)}>
-            <img src="./images/archive.svg" alt="archive icon" /> Archive
+            {isArchiveBtnShowing ? (
+              <>
+                <img src="./images/delete.svg" alt="archive icon" />
+                <span>Delete Mode</span>
+              </>
+            ) : (
+              <>
+                <img src="./images/archive.svg" alt="archive icon" />
+                <span>Archive Mode</span>
+              </>
+            )}
           </Button>
 
-          <button>Select</button>
+          <select
+            className="select-filter"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="inupt">By Input</option>
+            <option value="purchased">By Purchased</option>
+            <option value="quantity">By Quantity</option>
+          </select>
 
           <DiplayStyle
             gridDisplay={gridDisplay}
@@ -149,7 +176,7 @@ export default function App() {
         {!isArchiveOpen && (
           <>
             <ShoppingList
-              // shoppingList={shoppingList}
+              shoppingList={shoppingList}
               onSetShoppingList={setShoppingList}
               onDeleteItem={handleDeleteItem}
               onEditItem={handleEditItem}
@@ -158,6 +185,7 @@ export default function App() {
               onAddItemToAchive={handleAddItemToAchive}
               isArchiveOpen={isArchiveOpen}
               archivedItems={archivedItems}
+              sortBy={sortBy}
             >
               {shoppingList}
             </ShoppingList>
@@ -174,6 +202,8 @@ export default function App() {
             isArchiveBtnShowing={isArchiveBtnShowing}
             isArchiveOpen={isArchiveOpen}
             onRemoveItemFromArchive={handleRemoveItemFromArchive}
+            onArchivedItems={setArchivedItems}
+            sortBy={sortBy}
           />
         )}
       </main>
@@ -182,6 +212,13 @@ export default function App() {
         onIsArchiveOpen={setIsArchiveOpen}
         isArchiveOpen={isArchiveOpen}
       />
+      {(shoppingList.length > 1 || archivedItems.length > 1) && (
+        <DeleteAllItems
+          onShoppingList={setShoppingList}
+          onArchiveItems={setArchivedItems}
+          isArchiveOpen={isArchiveOpen}
+        />
+      )}
       {isAddItemFormOpen && (
         <AddItemForm
           onIsAddItemFormOpen={handleIsAddItemFormOpen}
@@ -206,18 +243,40 @@ function ShoppingList({
   isArchiveOpen,
   archivedItems,
   onRemoveItemFromArchive,
+  onArchivedItems,
+  sortBy,
 }) {
+  // Handles toggleing an item that has been purchased or not
   function handlePurchaseToggle(obj) {
-    onSetShoppingList((lists) =>
-      lists.map((item) =>
-        item.id === obj.id ? { ...item, purchased: !item.purchased } : item
-      )
-    );
+    isArchiveOpen
+      ? onArchivedItems((lists) =>
+          lists.map((item) =>
+            item.id === obj.id ? { ...item, purchased: !obj.purchased } : item
+          )
+        )
+      : onSetShoppingList((lists) =>
+          lists.map((item) =>
+            item.id === obj.id ? { ...item, purchased: !item.purchased } : item
+          )
+        );
   }
+
+  // spreading the children so as to get a copy and not mutate directly
+  let sortedList = [...children];
+
+  // no need for an if statement for input cos if its input it just falls back to sortedList
+
+  if (sortBy === "purchased")
+    sortedList = sortedList.sort(
+      (a, b) => Number(a.purchased) - Number(b.purchased)
+    );
+
+  if (sortBy === "quantity")
+    sortedList = sortedList.sort((a, b) => b.quantity - a.quantity);
 
   return (
     <ul className={gridDisplay ? "item-container-grid" : "item-container"}>
-      {children.map((list) => (
+      {sortedList.map((list) => (
         <Item
           listObj={list}
           key={list.id}
@@ -307,21 +366,25 @@ function Item({
 
 function ArchivedItems({
   archivedItems,
+  onArchivedItems,
   onEditItem,
   onDeleteItem,
   gridDisplay,
   isArchiveBtnShowing,
   isArchiveOpen,
   onRemoveItemFromArchive,
+  sortBy,
 }) {
   return (
     <ShoppingList
       onEditItem={onEditItem}
+      onArchivedItems={onArchivedItems}
       onDeleteItem={onDeleteItem}
       gridDisplay={gridDisplay}
       isArchiveBtnShowing={isArchiveBtnShowing}
       isArchiveOpen={isArchiveOpen}
       onRemoveItemFromArchive={onRemoveItemFromArchive}
+      sortBy={sortBy}
     >
       {archivedItems}
     </ShoppingList>

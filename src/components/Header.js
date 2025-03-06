@@ -3,7 +3,7 @@ export function Header({ onThemeToggle, isDarkMode }) {
     <header className="header">
       <span className="logo-span">
         <img
-          src="./images/trial-logo.svg"
+          src="./images/shopping-cart-logo.svg"
           alt="Shopping cart icon"
           className="logo"
         />
