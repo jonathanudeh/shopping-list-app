@@ -212,6 +212,7 @@ export default function App() {
         onIsArchiveOpen={setIsArchiveOpen}
         isArchiveOpen={isArchiveOpen}
       />
+
       {(shoppingList.length > 1 || archivedItems.length > 1) && (
         <DeleteAllItems
           onShoppingList={setShoppingList}
@@ -219,6 +220,7 @@ export default function App() {
           isArchiveOpen={isArchiveOpen}
         />
       )}
+
       {isAddItemFormOpen && (
         <AddItemForm
           onIsAddItemFormOpen={handleIsAddItemFormOpen}
